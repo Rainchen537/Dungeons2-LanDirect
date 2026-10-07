@@ -1,6 +1,8 @@
 # File-system integration tests. Never use a real game or real save directory.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$version = ([xml](Get-Content -LiteralPath (Join-Path $root 'mods\LanDirect\LanDirect.csproj') -Raw)).Project.PropertyGroup.Version
+$builtPackage = Join-Path $root "artifacts\LanDirect-$version"
 $fixture = Join-Path $root ('artifacts\installer-test-' + [guid]::NewGuid().ToString('N'))
 $game = Join-Path $fixture 'Fake Steam Game'
 $local = Join-Path $fixture 'LocalAppData'
@@ -14,12 +16,12 @@ foreach ($path in @((Split-Path -Parent $exe),$mods,$package,$save)) { New-Item 
 [IO.File]::WriteAllText((Join-Path $mods 'BlueprintLoader-test.pak'), 'fixture-loader')
 [IO.File]::WriteAllText((Join-Path $save 'CharacterFixture.sav'), 'fixture-save')
 $saveHash = (Get-FileHash -LiteralPath (Join-Path $save 'CharacterFixture.sav')).Hash
-Copy-Item -Path (Join-Path $root 'artifacts\LanDirect-0.1.0\LanDirect_P.*') -Destination $package
-Copy-Item -LiteralPath (Join-Path $root 'artifacts\LanDirect-0.1.0\manifest.json') -Destination $package
+Copy-Item -Path (Join-Path $builtPackage 'LanDirect_P.*') -Destination $package
+Copy-Item -LiteralPath (Join-Path $builtPackage 'manifest.json') -Destination $package
 $script = Join-Path $fixture 'InstallerUnderTest.ps1'
 $source = [IO.File]::ReadAllText((Join-Path $root 'scripts\Manage-LanDirect.ps1'))
 # Substitute only the fixture executable hash; the production version remains pinned.
-$source = $source.Replace('231147bd0c655a4ae73f90873675d42917f2bfb3a9ee164fc64f217d6d6bd4ef', (Get-FileHash -LiteralPath $exe).Hash)
+$source = $source.Replace('3a8703406fd50520f83c4f70a0212c000cb3b584ef28eb38032902230c01ebdd', (Get-FileHash -LiteralPath $exe).Hash)
 [IO.File]::WriteAllText($script, $source, (New-Object Text.UTF8Encoding($true)))
 $harness = Join-Path $fixture 'Harness.ps1'
 $harnessSource = @'
@@ -58,7 +60,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $mods 'BlueprintLoader-test.pak'))) 
 if ((Get-FileHash -LiteralPath (Join-Path $save 'CharacterFixture.sav')).Hash -ne $saveHash) { throw 'Save was modified.' }
 [IO.File]::AppendAllText((Join-Path $package 'LanDirect_P.pak'),'tampered')
 Run-Case 'reject tampered package' 'Install' 1
-Copy-Item -LiteralPath (Join-Path $root 'artifacts\LanDirect-0.1.0\LanDirect_P.pak') -Destination $package -Force
+Copy-Item -LiteralPath (Join-Path $builtPackage 'LanDirect_P.pak') -Destination $package -Force
 [IO.File]::AppendAllText($exe,'different-build')
 Run-Case 'reject unsupported game build' 'Install' 1
 Write-Host 'All isolated installer checks passed. No real game or save files were touched.'

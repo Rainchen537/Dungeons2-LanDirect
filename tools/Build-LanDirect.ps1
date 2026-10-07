@@ -6,7 +6,8 @@ $env:PATH = (Split-Path -Parent $taskDotnet) + ';' + $env:PATH
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 & $taskDotnet build (Join-Path $taskRoot 'mods\LanDirect\LanDirect.csproj') --nologo
 if ($LASTEXITCODE -ne 0) { throw "Build failed: $LASTEXITCODE" }
-$taskPackage = Join-Path $taskRoot 'artifacts\LanDirect-0.1.0'
+$taskVersion = ([xml](Get-Content -LiteralPath (Join-Path $taskRoot 'mods\LanDirect\LanDirect.csproj') -Raw)).Project.PropertyGroup.Version
+$taskPackage = Join-Path $taskRoot "artifacts\LanDirect-$taskVersion"
 New-Item -ItemType Directory -Path $taskPackage -Force | Out-Null
 $taskHashes = @()
 foreach ($taskExtension in @('pak', 'utoc', 'ucas')) {
@@ -18,6 +19,6 @@ foreach ($taskExtension in @('pak', 'utoc', 'ucas')) {
     if ((Get-FileHash -LiteralPath $taskTarget -Algorithm SHA256).Hash -ne $taskHash) { throw 'Package copy hash mismatch.' }
     $taskHashes += [pscustomobject]@{ name=$taskName; sha256=$taskHash; length=(Get-Item -LiteralPath $taskTarget).Length }
 }
-[pscustomobject]@{ version='0.1.0'; gameBuild='25647713'; sdk='NeoRune.Sdk/0.4.2'; runtimeVerified=$false; files=$taskHashes } |
+[pscustomobject]@{ version=$taskVersion; gameBuild='25754144'; sdk='NeoRune.Sdk/0.4.2'; runtimeVerified=$false; files=$taskHashes } |
     ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $taskPackage 'manifest.json') -Encoding UTF8
 Write-Host "Experimental package: $taskPackage"

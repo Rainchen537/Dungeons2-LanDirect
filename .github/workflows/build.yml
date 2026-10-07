@@ -26,5 +26,5 @@ jobs:
         with:
           name: LanDirect-windows
           path: |
-            artifacts/LanDirect-0.1.0-windows.zip
+            artifacts/LanDirect-*-windows.zip
             artifacts/SHA256SUMS.txt
