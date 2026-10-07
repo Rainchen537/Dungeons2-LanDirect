@@ -2,7 +2,7 @@
 
 让离线英雄在**主菜单**点击“本地开服”，另一台电脑输入 **IPv4:端口** 加入。按钮、弹窗边框、标题和确认按钮引用游戏原版 UI，普通“开始游戏”入口仍保留。
 
-**当前为 0.1.0 实验版，尚不能保证双机联机成功。** 已在单台 Windows PC 验证从主菜单开服、进入世界及 UDP 监听；第二台电脑加入、角色身份初始化、多人同步和双方保存仍需验证。
+**Releases 中的 0.1.0 为旧实验版；本分支是 0.1.1 修复候选，尚未发布。** 候选版让 LAN 请求先执行原版开始游戏流程，尚未确认解决地牢加载问题。以下 0.1.0 验证记录不能当作候选版运行结果。 已在单台 Windows PC 验证从主菜单开服、进入世界及 UDP 监听；第二台电脑加入、角色身份初始化、多人同步和双方保存仍需验证。
 
 **兼容性更新（2026-10-07）：本机 Steam 已更新到构建 25754144，本发布不支持该构建。** 0.1.0 保留此前 25647713 的验证结果；新版需要重新生成/确认绑定并运行验证，安装器会拒绝未知版本。若朋友已更新，请等待适配版。
 
@@ -10,8 +10,8 @@
 
 ## 给朋友的安装步骤
 
-1. 在两台电脑上安装相同版本的 Steam 游戏。本版仅支持构建 **25647713**（1.1.1.0）；游戏更新后安装程序会拒绝安装。
-2. 从 [Blueprint Loader 作者页](https://www.nexusmods.com/minecraftdungeons2/mods/2) 下载并安装 **Blueprint Loader 2.3**，按作者说明放置资源。加载器不包含在本项目安装包中。
+1. 在两台电脑上安装相同版本的 Steam 游戏。旧发布 0.1.0 仅支持构建 **25647713**（1.1.1.0）。本分支 0.1.1 候选包将 EXE 校验固定到 **25754144**（1.1.2.0），仍需运行验证；不要把两版安装器混用。
+2. 从 [Blueprint Loader 作者页](https://www.nexusmods.com/minecraftdungeons2/mods/2) 下载并安装 **Blueprint Loader 2.3**，按作者说明放置资源。加载器不包含在本项目安装包中。原包文件名、SHA-256 和作者权限说明见 [加载器依赖记录](vendor/blueprint-loader/README.md)。
 3. 打开 [Releases](https://github.com/Rainchen537/Dungeons2-LanDirect/releases)，下载 `LanDirect-0.1.0-windows.zip`，**完整解压**。不要只下载 GitHub 自动生成的 Source code。
 4. 先正常启动游戏并创建或选好离线英雄，然后退出游戏。
 5. 双击解压目录里的 `Install.cmd`。程序自动查找 Steam 游戏目录；找不到或存在多个目录时会提示输入路径。
@@ -65,12 +65,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Build-LanDirect.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Package-LanDirect.ps1
 ```
 
-SDK 使用 NuGet 上固定版本 `NeoRune.Sdk/0.4.2`，构建不会自动安装进游戏。输出为 `artifacts\LanDirect-0.1.0-windows.zip`。构建工具会优先使用本地 `dependencies\dotnet`（如果存在），否则使用 PATH 上的 .NET SDK。GitHub Actions 同样在 Windows 构建并上传安装包。
+SDK 使用 NuGet 上固定版本 `NeoRune.Sdk/0.4.2`，构建不会自动安装进游戏。本分支输出为 `artifacts\LanDirect-0.1.1-windows.zip`，仅供候选版测试。版本号从项目文件读取。构建工具会优先使用本地 `dependencies\dotnet`（如果存在），否则使用 PATH 上的 .NET SDK。GitHub Actions 同样在 Windows 构建并上传安装包。
 
 源码主要位于 [ModActor.cs](mods/LanDirect/ModActor.cs)（主菜单与 listen/travel）和 [LanPanel.cs](mods/LanDirect/LanPanel.cs)（原版控件弹窗）。游戏 EXE 校验值为：
 
 ```text
-231147bd0c655a4ae73f90873675d42917f2bfb3a9ee164fc64f217d6d6bd4ef
+3a8703406fd50520f83c4f70a0212c000cb3b584ef28eb38032902230c01ebdd
 ```
 
 本仓库不包含存档、游戏原版资源、加载器、私有工具依赖或本机研究转储。原创代码采用 [MIT](LICENSE) 许可，依赖说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。非官方项目，与游戏发行方无关联。

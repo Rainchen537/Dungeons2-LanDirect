@@ -6,7 +6,7 @@
     [switch]$NonInteractive
 )
 $ErrorActionPreference = 'Stop'
-$expectedExe = '231147bd0c655a4ae73f90873675d42917f2bfb3a9ee164fc64f217d6d6bd4ef'
+$expectedExe = '3a8703406fd50520f83c4f70a0212c000cb3b584ef28eb38032902230c01ebdd'
 $names = @('LanDirect_P.pak','LanDirect_P.utoc','LanDirect_P.ucas')
 $statePath = Join-Path $StateRoot 'installation.json'
 function Find-Game {
