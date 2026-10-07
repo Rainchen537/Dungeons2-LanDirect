@@ -9,7 +9,7 @@ using UE.SWPlayerState;
 [ModSetting.Heading("局域网直连 · 实验原型")]
 [ModSetting.Text("在主菜单选择离线角色，再使用本地开服或加入。多人同步和双方角色保存尚未验证。")]
 [ModSetting.TextInput("Port", "开服端口", Default = "7777")]
-[ModSetting.EventButton("Host", "在当前地图开服", ButtonText = "开服（实验）")]
+[ModSetting.EventButton("Host", "从主菜单开服", ButtonText = "开服（实验）")]
 [ModSetting.TextInput("Endpoint", "对方的 IPv4:端口", Default = "127.0.0.1:7777", Placeholder = "192.168.1.10:7777")]
 [ModSetting.EventButton("Join", "加入指定地址", ButtonText = "加入（实验）")]
 [ModSetting.EventButton("Diagnose", "记录当前地图和控制器", ButtonText = "记录诊断")]
@@ -216,7 +216,7 @@ public class ModActor : AActor, IModSettings
         if (travelling) { Feedback("正在连接，请等待。"); return; }
         if (World.PlayerController(this) == null)
         {
-            Log.Write("Enter your offline character's world before hosting or joining.");
+            Feedback("主菜单尚未就绪，请稍后重试。");
             return;
         }
         if (id == "Host") Host();
