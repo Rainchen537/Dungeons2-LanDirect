@@ -1,0 +1,10 @@
+<Project Sdk="NeoRune.Sdk/0.4.2">
+  <PropertyGroup>
+    <NeoRuneModName>LanDirect</NeoRuneModName>
+    <NeoRuneModTitle>LAN Direct (experimental)</NeoRuneModTitle>
+    <NeoRuneModAuthor>Local development</NeoRuneModAuthor>
+    <Version>0.1.0</Version>
+    <NeoRuneModDescription>Offline LAN listen/travel experiment. Multiplayer and character persistence are unverified.</NeoRuneModDescription>
+    <NeoRuneInstall>false</NeoRuneInstall>
+  </PropertyGroup>
+</Project>

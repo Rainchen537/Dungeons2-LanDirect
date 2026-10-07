@@ -1,0 +1,15 @@
+__pycache__/
+bin/
+obj/
+dependencies/
+backups/
+runtime-logs/
+artifacts/
+research/
+config/
+mods/LanDirectProbe/
+tools/ApiInspect/
+tools/*.py
+tools/Disable-Probe.ps1
+tools/Install-LanDirect.ps1
+tools/Disable-LanDirect.ps1

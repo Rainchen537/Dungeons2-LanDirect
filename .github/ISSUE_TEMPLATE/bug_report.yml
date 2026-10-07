@@ -1,0 +1,31 @@
+name: 安装或联机问题
+description: 报告实验版的问题；请勿上传存档、账号资料或崩溃转储
+title: '[问题] '
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: 游戏、加载器与 Mod 版本
+      description: 联机问题请分别写两台电脑的版本
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 操作步骤与结果
+      description: 是安装、主菜单、开服、加入、过图还是保存出问题？
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: 错误文字或截图
+      description: 隐去昵称和个人路径，不要提交完整存档或 .dmp
+  - type: dropdown
+    id: network
+    attributes:
+      label: 网络条件
+      options:
+        - 同一局域网
+        - 仅本机测试
+        - 其他（请说明）

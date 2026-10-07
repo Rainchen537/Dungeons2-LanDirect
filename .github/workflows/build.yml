@@ -1,0 +1,30 @@
+name: Windows build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build mod
+        shell: powershell
+        run: ./tools/Build-LanDirect.ps1
+      - name: Package release
+        shell: powershell
+        run: ./tools/Package-LanDirect.ps1
+      - name: Test installer in isolated fixtures
+        shell: powershell
+        run: ./tests/Test-Installer.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LanDirect-windows
+          path: |
+            artifacts/LanDirect-0.1.0-windows.zip
+            artifacts/SHA256SUMS.txt
