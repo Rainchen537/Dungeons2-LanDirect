@@ -62,3 +62,5 @@ Copy-Item -LiteralPath (Join-Path $root 'artifacts\LanDirect-0.1.0\LanDirect_P.p
 [IO.File]::AppendAllText($exe,'different-build')
 Run-Case 'reject unsupported game build' 'Install' 1
 Write-Host 'All isolated installer checks passed. No real game or save files were touched.'
+# The final expected rejection exits 1; reset it for GitHub's dot-sourced wrapper.
+exit 0
