@@ -23,6 +23,9 @@ public class ModActor : AActor, IModSettings
     LanPanel? panel;
     UAS_InitialLobbyScreen? menu;
     UAS_LobbySingleActionButton? hostButton;
+    UAS_LobbySingleActionButton? joinButton;
+    UCommonButtonBase? boundPlayButton;
+    UCommonButtonBase? boundCancelButton;
     LanSessionState? session;
     int initializationPolls;
 
@@ -199,13 +202,25 @@ public class ModActor : AActor, IModSettings
             if (lobby.GetOwningPlayer() != World.PlayerController(this) || !lobby.IsRendered()) continue;
             var list = lobby.PlayButton.GetParent() as UVerticalBox;
             if (list == null) { Log.Write("Play button's parent is not a vertical menu."); continue; }
-            menu = lobby;
-            if (lobby.CancelButton != null) lobby.CancelButton.OnButtonBaseClicked += OnNativeStartCancelled;
-            lobby.PlayButton.OnButtonBaseClicked += OnLobbyPlayClicked;
+            // Selecting another hero can replace the lobby or rebuild its children
+            // without changing maps. Keep polling, but leave an intact menu alone.
+            if (menu != lobby)
+            {
+                panel?.Dismiss();
+                panel = null;
+                RemoveMenuButtons();
+                menu = lobby;
+            }
+            BindLobbyButtons(lobby);
+            if (UKismetSystemLibrary.IsValid(hostButton) && UKismetSystemLibrary.IsValid(joinButton)
+                && hostButton!.GetParent() == list && joinButton!.GetParent() == list) return;
+
+            RemoveMenuButtons();
             var host = NativeButton(session != null && session.Stage == 3 ? "关闭本地大厅" : "本地开服");
             var join = NativeButton("加入本地游戏");
             if (host == null || join == null) return;
             hostButton = host;
+            joinButton = join;
             host.OnButtonBaseClicked += OpenHost;
             join.OnButtonBaseClicked += OpenJoin;
             var children = list.GetAllChildren();
@@ -220,9 +235,32 @@ public class ModActor : AActor, IModSettings
                 }
             }
             Log.Write("Native LAN menu buttons attached.");
-            Timer.Stop(this, nameof(AttachPanel));
             return;
         }
+    }
+
+    void BindLobbyButtons(UAS_InitialLobbyScreen lobby)
+    {
+        if (boundPlayButton != lobby.PlayButton)
+        {
+            if (UKismetSystemLibrary.IsValid(boundPlayButton)) boundPlayButton!.OnButtonBaseClicked -= OnLobbyPlayClicked;
+            boundPlayButton = lobby.PlayButton;
+            boundPlayButton!.OnButtonBaseClicked += OnLobbyPlayClicked;
+        }
+        if (boundCancelButton != lobby.CancelButton)
+        {
+            if (UKismetSystemLibrary.IsValid(boundCancelButton)) boundCancelButton!.OnButtonBaseClicked -= OnNativeStartCancelled;
+            boundCancelButton = lobby.CancelButton;
+            if (boundCancelButton != null) boundCancelButton.OnButtonBaseClicked += OnNativeStartCancelled;
+        }
+    }
+
+    void RemoveMenuButtons()
+    {
+        if (UKismetSystemLibrary.IsValid(hostButton)) hostButton!.RemoveFromParent();
+        if (UKismetSystemLibrary.IsValid(joinButton)) joinButton!.RemoveFromParent();
+        hostButton = null;
+        joinButton = null;
     }
 
     public UAS_LobbySingleActionButton? NativeButton(string text)
