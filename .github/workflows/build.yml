@@ -24,6 +24,9 @@ jobs:
           $env:PATH = '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin;' + $env:PATH
           ./tools/Build-NativeBridge.ps1 -Compiler '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin/g++.exe'
           ./tools/Build-LanDirect.ps1
+      - name: Test menu attachment lifecycle
+        shell: powershell
+        run: ./tests/Test-MenuLifecycle.ps1
       - name: Package release
         shell: powershell
         run: |
