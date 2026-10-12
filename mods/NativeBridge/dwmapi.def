@@ -1,0 +1,121 @@
+LIBRARY dwmapi
+EXPORTS
+  DllCanUnloadNow @111
+  DllGetClassObject @115
+  DwmAttachMilContent @116
+  DwmDefWindowProc @117
+  DwmDetachMilContent @118
+  DwmEnableBlurBehindWindow @119
+  DwmEnableComposition @102
+  DwmEnableMMCSS @120
+  DwmExtendFrameIntoClientArea @121
+  DwmFlush @122
+  DwmGetColorizationColor @123
+  DwmGetCompositionTimingInfo @125
+  DwmGetGraphicsStreamClient @126
+  DwmGetGraphicsStreamTransformHint @129
+  DwmGetTransportAttributes @130
+  DwmGetUnmetTabRequirements @133
+  DwmGetWindowAttribute @134
+  DwmInvalidateIconicBitmaps @146
+  DwmIsCompositionEnabled @149
+  DwmModifyPreviousDxFrameDuration @205
+  DwmQueryThumbnailSourceSize @206
+  DwmRegisterThumbnail @207
+  DwmRenderGesture @208
+  DwmSetDxFrameDuration @209
+  DwmSetIconicLivePreviewBitmap @210
+  DwmSetIconicThumbnail @211
+  DwmSetPresentParameters @212
+  DwmSetWindowAttribute @213
+  DwmShowContact @214
+  DwmTetherContact @215
+  DwmTetherTextContact @156
+  DwmTransitionOwnedWindow @216
+  DwmUnregisterThumbnail @217
+  DwmUpdateThumbnailProperties @218
+  DwmpAllocateSecurityDescriptor @136
+  DwmpDxGetWindowSharedSurface @100
+  DwmpDxUpdateWindowSharedSurface @101
+  DwmpDxgiIsThreadDesktopComposited @128
+  DwmpEnableDDASupport @143
+  DwmpFreeSecurityDescriptor @137
+  DwmpGetColorizationParameters @127
+  DwmpRenderFlick @135
+  DwmpSetColorizationParameters @131
+  DwmpUpdateProxyWindowForCapture @183
+  Ordinal103 @103 NONAME
+  Ordinal104 @104 NONAME
+  Ordinal105 @105 NONAME
+  Ordinal106 @106 NONAME
+  Ordinal107 @107 NONAME
+  Ordinal108 @108 NONAME
+  Ordinal109 @109 NONAME
+  Ordinal110 @110 NONAME
+  Ordinal112 @112 NONAME
+  Ordinal113 @113 NONAME
+  Ordinal114 @114 NONAME
+  Ordinal124 @124 NONAME
+  Ordinal132 @132 NONAME
+  Ordinal138 @138 NONAME
+  Ordinal139 @139 NONAME
+  Ordinal140 @140 NONAME
+  Ordinal141 @141 NONAME
+  Ordinal142 @142 NONAME
+  Ordinal144 @144 NONAME
+  Ordinal145 @145 NONAME
+  Ordinal147 @147 NONAME
+  Ordinal148 @148 NONAME
+  Ordinal150 @150 NONAME
+  Ordinal151 @151 NONAME
+  Ordinal152 @152 NONAME
+  Ordinal153 @153 NONAME
+  Ordinal154 @154 NONAME
+  Ordinal155 @155 NONAME
+  Ordinal157 @157 NONAME
+  Ordinal158 @158 NONAME
+  Ordinal159 @159 NONAME
+  Ordinal160 @160 NONAME
+  Ordinal161 @161 NONAME
+  Ordinal162 @162 NONAME
+  Ordinal163 @163 NONAME
+  Ordinal164 @164 NONAME
+  Ordinal165 @165 NONAME
+  Ordinal166 @166 NONAME
+  Ordinal167 @167 NONAME
+  Ordinal168 @168 NONAME
+  Ordinal169 @169 NONAME
+  Ordinal170 @170 NONAME
+  Ordinal171 @171 NONAME
+  Ordinal172 @172 NONAME
+  Ordinal173 @173 NONAME
+  Ordinal174 @174 NONAME
+  Ordinal175 @175 NONAME
+  Ordinal176 @176 NONAME
+  Ordinal177 @177 NONAME
+  Ordinal178 @178 NONAME
+  Ordinal179 @179 NONAME
+  Ordinal180 @180 NONAME
+  Ordinal181 @181 NONAME
+  Ordinal182 @182 NONAME
+  Ordinal184 @184 NONAME
+  Ordinal185 @185 NONAME
+  Ordinal186 @186 NONAME
+  Ordinal187 @187 NONAME
+  Ordinal188 @188 NONAME
+  Ordinal189 @189 NONAME
+  Ordinal190 @190 NONAME
+  Ordinal191 @191 NONAME
+  Ordinal192 @192 NONAME
+  Ordinal193 @193 NONAME
+  Ordinal194 @194 NONAME
+  Ordinal195 @195 NONAME
+  Ordinal196 @196 NONAME
+  Ordinal197 @197 NONAME
+  Ordinal198 @198 NONAME
+  Ordinal199 @199 NONAME
+  Ordinal200 @200 NONAME
+  Ordinal201 @201 NONAME
+  Ordinal202 @202 NONAME
+  Ordinal203 @203 NONAME
+  Ordinal204 @204 NONAME

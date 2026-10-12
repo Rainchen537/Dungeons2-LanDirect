@@ -23,6 +23,7 @@ foreach ($name in @('Install.cmd','Uninstall.cmd','Check.cmd','README.md','LICEN
 }
 Copy-Item -LiteralPath (Join-Path $root 'docs\TESTING.md') -Destination (Join-Path $stage 'docs')
 Copy-Item -LiteralPath (Join-Path $root 'docs\KNOWN_ISSUES.md') -Destination (Join-Path $stage 'docs')
+Copy-Item -LiteralPath (Join-Path $root 'docs\NATIVE_BRIDGE.md') -Destination (Join-Path $stage 'docs')
 $script = Join-Path $root 'scripts\Manage-LanDirect.ps1'
 # Windows PowerShell 5.1 requires BOM to read Chinese source consistently.
 [IO.File]::WriteAllText((Join-Path $stage 'scripts\Manage-LanDirect.ps1'), [IO.File]::ReadAllText($script), (New-Object Text.UTF8Encoding($true)))

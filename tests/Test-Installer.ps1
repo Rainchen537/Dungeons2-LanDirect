@@ -13,6 +13,7 @@ $mods = Join-Path $game 'Dungeons\Content\Paks\~mods'
 $exe = Join-Path $game 'Dungeons\Binaries\Win64\Dungeons-Win64-Shipping.exe'
 foreach ($path in @((Split-Path -Parent $exe),$mods,$package,$save)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
 [IO.File]::WriteAllText($exe, 'fixture-executable')
+Copy-Item -LiteralPath (Join-Path $root 'artifacts\NativeBridge-0.1.1\dwmapi.dll') -Destination (Join-Path (Split-Path -Parent $exe) 'dwmapi.dll')
 [IO.File]::WriteAllText((Join-Path $mods 'BlueprintLoader-test.pak'), 'fixture-loader')
 [IO.File]::WriteAllText((Join-Path $save 'CharacterFixture.sav'), 'fixture-save')
 $saveHash = (Get-FileHash -LiteralPath (Join-Path $save 'CharacterFixture.sav')).Hash

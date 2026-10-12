@@ -8,4 +8,5 @@ public class LanSessionState : UObject
     public int Stage;
     public bool StartedFromOfflineLobby;
     public string? CharacterId;
+    public int NativeListenStatus;
 }

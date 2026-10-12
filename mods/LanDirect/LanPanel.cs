@@ -44,7 +44,7 @@ public class LanPanel : UCommonActivatableWidget
         var frame = NativeWidget("/SpicewoodUI/Spicewood/UI/Widget/Dialog/Widget/W_DialogFrame_GenericDesign.W_DialogFrame_GenericDesign_C") as UAS_DialogFrameGenericDesign;
         var heading = NativeWidget("/SpicewoodUI/Spicewood/UI/Widget/Dialog/Widget/W_DialogHeading.W_DialogHeading_C") as UAS_DialogHeading;
         input = UGameplayStatics.SpawnObject(Unreal.ClassOf<UAS_SpicewoodEditableTextBox>(), tree) as UEditableTextBox;
-        var confirm = ActionButton(hosting ? "开服并进入" : "加入并进入");
+        var confirm = ActionButton(hosting ? "创建大厅" : "加入大厅");
         var cancel = ActionButton("取消");
         if (overlay == null || scrim == null || column == null || buttons == null || size == null || frame == null || heading == null || input == null || confirm == null || cancel == null) return false;
         var body = FindSlot(frame.WidgetTree?.RootWidget, "BodyContent");
@@ -65,7 +65,7 @@ public class LanPanel : UCommonActivatableWidget
         input.WidgetStyle = style;
         input.SetForegroundColor(new FLinearColor { R = .06f, G = .06f, B = .06f, A = 1 });
         column.AddChildToVerticalBox(heading);
-        column.AddChildToVerticalBox(Label(tree, hosting ? "使用当前选择的离线英雄创建游戏" : "使用当前离线英雄加入对方的游戏"));
+        column.AddChildToVerticalBox(Label(tree, hosting ? "建立大厅后点击原版开始游戏，再让朋友加入" : "使用当前离线英雄连接对方地址（实验）"));
         column.AddChildToVerticalBox(Label(tree, hosting ? "开服端口" : "对方的 IP:端口"));
         column.AddChildToVerticalBox(input);
         status = Label(tree, "");

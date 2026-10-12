@@ -19,6 +19,7 @@ foreach ($taskExtension in @('pak', 'utoc', 'ucas')) {
     if ((Get-FileHash -LiteralPath $taskTarget -Algorithm SHA256).Hash -ne $taskHash) { throw 'Package copy hash mismatch.' }
     $taskHashes += [pscustomobject]@{ name=$taskName; sha256=$taskHash; length=(Get-Item -LiteralPath $taskTarget).Length }
 }
-[pscustomobject]@{ version=$taskVersion; gameBuild='25754144'; sdk='NeoRune.Sdk/0.4.2'; runtimeVerified=$false; files=$taskHashes } |
+$taskNativeManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'artifacts\NativeBridge-0.1.1\manifest.json') -Raw | ConvertFrom-Json
+[pscustomobject]@{ version=$taskVersion; gameBuild='25754144'; sdk='NeoRune.Sdk/0.4.2'; runtimeVerified=$false; nativeSha256=$taskNativeManifest.sha256; files=$taskHashes } |
     ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $taskPackage 'manifest.json') -Encoding UTF8
 Write-Host "Experimental package: $taskPackage"
