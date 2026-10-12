@@ -13,10 +13,16 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: UCRT64
+          install: mingw-w64-ucrt-x86_64-gcc
       - name: Build mod
         shell: powershell
         run: |
-          ./tools/Build-NativeBridge.ps1 -Compiler C:/msys64/mingw64/bin/g++.exe
+          $env:PATH = '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin;' + $env:PATH
+          ./tools/Build-NativeBridge.ps1 -Compiler '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin/g++.exe'
           ./tools/Build-LanDirect.ps1
       - name: Package release
         shell: powershell
