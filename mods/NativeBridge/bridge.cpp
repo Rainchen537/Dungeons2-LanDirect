@@ -7,10 +7,12 @@
 #include <string>
 
 
+
 extern bool InitializeDwmForwarding();
 static wchar_t logPath[MAX_PATH];
 static SRWLOCK logLock = SRWLOCK_INIT;
 static uintptr_t imageBase;
+static bool quietDebugOutput;
 static void Log(const char* message) {
     AcquireSRWLockExclusive(&logLock);
     HANDLE file=CreateFileW(logPath, FILE_APPEND_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE,
@@ -59,15 +61,24 @@ static bool SupportedBuild() {
     return ok && strcmp(hex,"3A8703406FD50520F83C4F70A0212C000CB3B584EF28EB38032902230C01EBDD")==0;
 }
 #include "bridge.inc"
+static LONG CALLBACK DebugNotification(EXCEPTION_POINTERS* error) {
+    if(error && quietDebugOutput &&
+       (error->ExceptionRecord->ExceptionCode==0x40010006 || error->ExceptionRecord->ExceptionCode==0x4001000a))
+        return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 static DWORD WINAPI Initialize(void*) {
-    Log("LanDirect NativeBridge 0.1.1; in-place listen; no code hooks.");
+    Log("LanDirect NativeBridge 0.1.2; in-place listen with duplicate local identity rejection.");
     if(!SupportedBuild()) { Log("Unsupported executable hash; hook not installed."); return 0; }
     imageBase=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    quietDebugOutput=wcsstr(GetCommandLineW(),L"-LanDirectQuietDebug")!=nullptr;
+    if(quietDebugOutput) Log("Local-test debug-print notifications suppressed; native file logging remains enabled.");
     const unsigned char expected[]={0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x6c,0x24,0x10,0x48,0x89,0x74,0x24,0x18,0x57};
     unsigned char bytes[sizeof(expected)]; SIZE_T received;
     if(!ReadProcessMemory(GetCurrentProcess(),reinterpret_cast<void*>(imageBase+0x3d517a0),bytes,sizeof(bytes),&received) || received!=sizeof(bytes) || memcmp(bytes,expected,sizeof(bytes))!=0) {
         Log("EnableListenServer signature differs; bridge inactive.");return 0;
     }
+    if(quietDebugOutput && !AddVectoredExceptionHandler(1,DebugNotification)) Log("Debug-print handler installation failed.");
     StartBridgeTimer();
     return 0;
 

@@ -2,6 +2,7 @@ param([string]$InstallerPath)
 # Isolated filesystem fixtures only; no real game or saves.
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
+$version=([xml](Get-Content -LiteralPath (Join-Path $root 'mods\LanDirect\LanDirect.csproj') -Raw)).Project.PropertyGroup.Version
 $fixture=Join-Path $root ('artifacts\native-test-'+[guid]::NewGuid().ToString('N'))
 $game=Join-Path $fixture 'Game'
 $local=Join-Path $fixture 'Local'
@@ -38,7 +39,7 @@ exit $LASTEXITCODE
 '@
 [IO.File]::WriteAllText($harness,$harnessSource)
 function Run-Case($Label,$Action,$Expected,[int]$Running=0,[int]$FailRecord=0) {
-    $output=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $harness -ScriptPath $script -Action $Action -GameRoot $game -PackageRoot (Join-Path $root 'artifacts\NativeBridge-0.1.1') -StateRoot $state -LocalRoot $local -Running $Running -FailRecord $FailRecord 2>&1
+    $output=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $harness -ScriptPath $script -Action $Action -GameRoot $game -PackageRoot (Join-Path $root "artifacts\NativeBridge-$version") -StateRoot $state -LocalRoot $local -Running $Running -FailRecord $FailRecord 2>&1
     if ($LASTEXITCODE -ne $Expected) { throw "$Label failed: $output" }
     Write-Host "PASS: $Label"
 }
@@ -87,7 +88,7 @@ $recordPath=Join-Path $state 'installation.json'
 $record=Get-Content -LiteralPath $recordPath -Raw | ConvertFrom-Json
 $record.PSObject.Properties.Remove('configProtected')
 $record.PSObject.Properties.Remove('originalConfigAttributes')
-$record | ConvertTo-Json | Set-Content -LiteralPath $recordPath -Encoding UTF8
+[IO.File]::WriteAllText($recordPath,($record | ConvertTo-Json),(New-Object Text.UTF8Encoding($true)))
 Run-Case 'detect regenerated config' 'Check' 1
 Run-Case 'repair legacy regenerated config' 'Repair' 0
 Run-Case 'check repaired protection and values' 'Check' 0
@@ -111,6 +112,8 @@ if (Test-Path -LiteralPath $config) { throw 'Missing-config baseline was not res
 $readOnlyHash=(Get-FileHash -LiteralPath $config).Hash
 Run-Case 'install with original read-only config and no final newline' 'Install' 0
 Run-Case 'check no-final-newline section' 'Check' 0
+Run-Case 'repair original read-only BOM config' 'Repair' 0
+Run-Case 'repair original read-only BOM config repeatedly' 'Repair' 0
 Run-Case 'restore original read-only config' 'Uninstall' 0
 if ((Get-FileHash -LiteralPath $config).Hash -ne $readOnlyHash -or -not ([IO.File]::GetAttributes($config) -band [IO.FileAttributes]::ReadOnly)) { throw 'Original bytes or attributes changed.' }
 [IO.File]::SetAttributes($config,[IO.FileAttributes]::Normal)

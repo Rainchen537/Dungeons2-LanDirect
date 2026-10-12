@@ -65,7 +65,7 @@ public class LanPanel : UCommonActivatableWidget
         input.WidgetStyle = style;
         input.SetForegroundColor(new FLinearColor { R = .06f, G = .06f, B = .06f, A = 1 });
         column.AddChildToVerticalBox(heading);
-        column.AddChildToVerticalBox(Label(tree, hosting ? "建立大厅后点击原版开始游戏，再让朋友加入" : "使用当前离线英雄连接对方地址（实验）"));
+        column.AddChildToVerticalBox(Label(tree, hosting ? "建立大厅后点击原版开始游戏，再让朋友加入" : "双方使用不同 Steam 账号与离线英雄（实验）"));
         column.AddChildToVerticalBox(Label(tree, hosting ? "开服端口" : "对方的 IP:端口"));
         column.AddChildToVerticalBox(input);
         status = Label(tree, "");

@@ -31,7 +31,7 @@ public class ModActor : AActor, IModSettings
 
     protected override void ReceiveBeginPlay()
     {
-        Log.Write("LanDirect 0.1.1 native listen candidate; original Play without any second world travel.");
+        Log.Write("LanDirect 0.1.2; original Play with native host identity protection.");
         session = GetSession();
         Diagnose();
         Timer.Start(this, nameof(AttachPanel), 0.5f, loop: true);
@@ -48,6 +48,7 @@ public class ModActor : AActor, IModSettings
             Timer.Start(this, nameof(VerifyLanCharacter), 0.5f, loop: true);
         }
     }
+
 
     LanSessionState? GetSession()
     {
@@ -396,6 +397,7 @@ public class ModActor : AActor, IModSettings
             hostButton?.SetButtonText("关闭本地大厅");
             panel?.Dismiss();
             Log.Write("Native listener established in the existing menu. Waiting for original Play.");
+            Diagnose();
             return;
         }
         if (session.NativeListenStatus == 0 && initializationPolls < 40) return;

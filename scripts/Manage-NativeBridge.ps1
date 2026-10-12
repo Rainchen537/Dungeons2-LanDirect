@@ -115,7 +115,12 @@ try {
     $attributes=[IO.FileAttributes]::Normal
     if ($existed) { $attributes=[IO.File]::GetAttributes($config) }
     $originalAttributes=$attributes
-    if ($previous -and $previous.configProtected) { $originalAttributes=$attributes -band (-bnot [IO.FileAttributes]::ReadOnly) }
+    if ($previous -and $previous.configProtected) {
+        $originalAttributes=$attributes -band (-bnot [IO.FileAttributes]::ReadOnly)
+        if ($existed -and ($previous.originalConfigAttributes -band [IO.FileAttributes]::ReadOnly)) {
+            $originalAttributes=$originalAttributes -bor [IO.FileAttributes]::ReadOnly
+        }
+    }
     $backup=Join-Path $StateRoot ('backups\'+(Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
     New-Item -ItemType Directory -Path $backup -Force | Out-Null
     Copy-Item -LiteralPath $save -Destination $backup -Recurse
@@ -130,7 +135,12 @@ try {
     if ($existed) {
         Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.before-repair.ini')
         if ((Hash (Join-Path $backup 'Engine.before-repair.ini')) -ne (Hash $config)) { throw '配置备份校验失败。' }
-        if ($baseline -ceq ([IO.File]::ReadAllText($config))) { Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.ini') }
+        if ($previous -and (Hash $config) -eq $previous.configSha256 -and $previous.configExisted) {
+            $original=Join-Path $previous.backupDir 'Engine.ini'
+            if ((Hash $original) -ne $previous.originalConfigSha256) { throw '原配置备份校验失败。' }
+            Copy-Item -LiteralPath $original -Destination (Join-Path $backup 'Engine.ini')
+        }
+        elseif ($baseline -ceq ([IO.File]::ReadAllText($config))) { Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.ini') }
         else { [IO.File]::WriteAllText((Join-Path $backup 'Engine.ini'),$baseline,(New-Object Text.UTF8Encoding($false))) }
         $originalHash=Hash (Join-Path $backup 'Engine.ini')
     }

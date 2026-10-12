@@ -21,7 +21,9 @@ foreach ($running in Get-Process -Name 'Dungeons','Dungeons-Win64-Shipping' -Err
 foreach ($file in @((Join-Path $game 'steam_appid.txt'),(Join-Path (Split-Path -Parent $shipping) 'steam_appid.txt'))) {
     [IO.File]::WriteAllText($file,'1912410')
 }
-$arguments='-UserDir="'+$user+'" -SaveToUserDir -windowed -ResX=960 -ResY=540 -nosplash'
+# Repeated OutputDebugStringW waits can stall two local instances. Suppress
+# debug-print notifications in these isolated test copies; mod files remain.
+$arguments='-UserDir="'+$user+'" -SaveToUserDir -windowed -ResX=960 -ResY=540 -nosplash -LanDirectQuietDebug'
 # Use the original bootstrap, which supplies the project argument; show the
 # interactive game window so the user can operate it and handle OS prompts.
 $started=Start-Process -FilePath (Join-Path $game 'Dungeons.exe') -ArgumentList $arguments -WorkingDirectory $game -WindowStyle Normal -PassThru

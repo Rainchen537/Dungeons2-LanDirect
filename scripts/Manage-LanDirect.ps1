@@ -80,7 +80,7 @@ try {
     if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $expectedExe) { throw '游戏版本不匹配；本版仅支持 Steam 构建 25754144。' }
     $native = Join-Path $GameRoot 'Dungeons\Binaries\Win64\dwmapi.dll'
     if (-not $manifest.nativeSha256 -or -not (Test-Path -LiteralPath $native) -or (Get-FileHash -LiteralPath $native -Algorithm SHA256).Hash -ne $manifest.nativeSha256) {
-        throw '请先安装同一 Release 的 NativeBridge 0.1.1 前置包。现有 DLL 不匹配时不会继续安装。'
+        throw '请先安装同一 Release 的 NativeBridge 前置包。现有 DLL 不匹配时不会继续安装。'
     }
     $mods = Join-Path $GameRoot 'Dungeons\Content\Paks\~mods'
     if (-not (Get-ChildItem -LiteralPath $mods -Filter '*BlueprintLoader*.pak' -Recurse -File -ErrorAction SilentlyContinue)) {
