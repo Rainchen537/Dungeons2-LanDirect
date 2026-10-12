@@ -6,7 +6,7 @@
     [switch]$NonInteractive
 )
 $ErrorActionPreference = 'Stop'
-$expectedExe = '231147bd0c655a4ae73f90873675d42917f2bfb3a9ee164fc64f217d6d6bd4ef'
+$expectedExe = '3a8703406fd50520f83c4f70a0212c000cb3b584ef28eb38032902230c01ebdd'
 $names = @('LanDirect_P.pak','LanDirect_P.utoc','LanDirect_P.ucas')
 $statePath = Join-Path $StateRoot 'installation.json'
 function Find-Game {
@@ -77,7 +77,11 @@ try {
     if (-not $GameRoot) { $GameRoot = Find-Game }
     $GameRoot = (Resolve-Path -LiteralPath $GameRoot).Path
     $exe = Join-Path $GameRoot 'Dungeons\Binaries\Win64\Dungeons-Win64-Shipping.exe'
-    if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $expectedExe) { throw '游戏版本不匹配；本版仅验证 Steam 构建 25647713。' }
+    if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $expectedExe) { throw '游戏版本不匹配；本版仅支持 Steam 构建 25754144。' }
+    $native = Join-Path $GameRoot 'Dungeons\Binaries\Win64\dwmapi.dll'
+    if (-not $manifest.nativeSha256 -or -not (Test-Path -LiteralPath $native) -or (Get-FileHash -LiteralPath $native -Algorithm SHA256).Hash -ne $manifest.nativeSha256) {
+        throw '请先安装同一 Release 的 NativeBridge 前置包。现有 DLL 不匹配时不会继续安装。'
+    }
     $mods = Join-Path $GameRoot 'Dungeons\Content\Paks\~mods'
     if (-not (Get-ChildItem -LiteralPath $mods -Filter '*BlueprintLoader*.pak' -Recurse -File -ErrorAction SilentlyContinue)) {
         throw '请先安装 Blueprint Loader 2.3：https://www.nexusmods.com/minecraftdungeons2/mods/2'

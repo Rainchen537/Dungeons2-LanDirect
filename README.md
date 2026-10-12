@@ -1,76 +1,46 @@
-# LanDirect · 地下城 II 局域网直连
+# LanDirect · 地下城 II 局域网直连实验
 
-让离线英雄在**主菜单**点击“本地开服”，另一台电脑输入 **IPv4:端口** 加入。按钮、弹窗边框、标题和确认按钮引用游戏原版 UI，普通“开始游戏”入口仍保留。
+让两台 Windows 电脑通过 IPv4:端口测试离线英雄联机，保留原版“开始游戏”流程与游戏 UI。当前版本 **0.1.2**，支持 Steam 构建 **25754144 / 1.1.2.0**；0.1.0 是针对旧构建的历史实验。
 
-**当前为 0.1.0 实验版，尚不能保证双机联机成功。** 已在单台 Windows PC 验证从主菜单开服、进入世界及 UDP 监听；第二台电脑加入、角色身份初始化、多人同步和双方保存仍需验证。
+0.1.2 已修复本机同账号加入时房主被原生重连逻辑销毁的崩溃：重复身份连接会被拒绝，房主保留角色并可继续移动。两端须使用不同 Steam 账号。**不同账号成功加入、双方同步、共同过图和双方保存仍未验证。** 这是测试候选，请使用测试英雄。
 
-**兼容性更新（2026-10-07）：本机 Steam 已更新到构建 25754144，本发布不支持该构建。** 0.1.0 保留此前 25647713 的验证结果；新版需要重新生成/确认绑定并运行验证，安装器会拒绝未知版本。若朋友已更新，请等待适配版。
+## 两台电脑都要安装
 
-**已收到进入地牢/切换维度一直加载的报告，尚未完成复现和修复。** 当前只验证过主世界开服，请先不要用本地开服推进正式角色。定位进展见 [已知问题](docs/KNOWN_ISSUES.md)。
+从 [0.1.2 Release](https://github.com/Rainchen537/Dungeons2-LanDirect/releases/tag/v0.1.2) 下载两个 ZIP，分别完整解压：
 
-## 给朋友的安装步骤
+1. `NativeBridge-0.1.2-windows.zip`：本项目原创原生前置，不需要 UE4SS、MinHook 或 .NET。退出游戏后双击其 `Install.cmd`，输入 Steam 游戏根目录。它备份最新存档和 Engine.ini，安装原生桥接并启用地牢所需服务器流送设置。
+2. **Blueprint Loader**：从 [作者官方下载页](https://www.nexusmods.com/minecraftdungeons2/mods/2?tab=files) 下载，按包内说明安装。旧本机验证用 2.3，2026-10-12 作者页最新版是 2.5；2.5 与本项目尚未回归验证。双方必须使用相同版本。作者明确禁止站外转载，因此 GitHub 不附其原包；历史原包校验见 [依赖记录](vendor/blueprint-loader/README.md)。
+3. `LanDirect-0.1.2-windows.zip`：双击其 `Install.cmd` 安装蓝图 Mod。安装器检查游戏、原生前置和 Blueprint Loader，再备份存档并安装。不要只下载 Source code。
 
-1. 在两台电脑上安装相同版本的 Steam 游戏。本版仅支持构建 **25647713**（1.1.1.0）；游戏更新后安装程序会拒绝安装。
-2. 从 [Blueprint Loader 作者页](https://www.nexusmods.com/minecraftdungeons2/mods/2) 下载并安装 **Blueprint Loader 2.3**，按作者说明放置资源。加载器不包含在本项目安装包中。
-3. 打开 [Releases](https://github.com/Rainchen537/Dungeons2-LanDirect/releases)，下载 `LanDirect-0.1.0-windows.zip`，**完整解压**。不要只下载 GitHub 自动生成的 Source code。
-4. 先正常启动游戏并创建或选好离线英雄，然后退出游戏。
-5. 双击解压目录里的 `Install.cmd`。程序自动查找 Steam 游戏目录；找不到或存在多个目录时会提示输入路径。
-6. 显示“安装完成”后，通过 Steam 启动游戏。
+从托管安装的 0.1.1 升级：退出游戏，先用旧包卸载蓝图，再卸载原生前置，然后安装两个 0.1.2 新包；不要混用版本。
 
-安装前会逐文件备份并校验 `%LOCALAPPDATA%\Dungeons2\Saved\SaveGames`。备份位于 `%LOCALAPPDATA%\Dungeons2LanDirect\backups`，安装窗口会显示具体路径。安装程序不需要 .NET、不自动下载加载器、不自动关闭游戏。
+已手动安装旧候选的电脑：先备份、移走旧 LanDirect 三个资源和旧 `dwmapi.dll`；保留 Engine.ini 后移除原有两项服务器流送设置，再安装新包。脚本拒绝覆盖已有 DLL、Mod 或流送设置，不会主动关闭游戏。无需安装 UE4SS 或额外 Native Loader。
 
-## 两台电脑怎么操作
+## 同一局域网测试
 
-两台电脑先连接同一局域网，安装同一个 Release，并各自选择离线英雄。
+双方使用不同 Steam 账号并选择离线英雄。同账号本机双开会被拒绝；原生界面显示错误 0015，房主日志会明确记录重复身份。主机点击“本地开服”，默认端口 `7777`；大厅建立后点击原版“开始游戏”。用 `ipconfig` 找正在使用的无线/以太网 IPv4，例如 `192.168.1.10`。
 
-**开服电脑：** 点击主菜单“本地开服”，端口保持 `7777`，点击“开服并进入”。进入世界后保持游戏运行。用 Windows 的 `ipconfig` 查看正在使用的无线网卡或以太网卡的 IPv4，例如 `192.168.1.10`。
+朋友在主菜单点击“加入本地游戏”，输入 `192.168.1.10:7777`。`127.0.0.1` 指自己，不能加入朋友。Windows 防火墙提示时允许专用网络通信；安装器不改防火墙。
 
-**加入电脑：** 点击主菜单“加入本地游戏”，填入开服电脑的地址，例如 `192.168.1.10:7777`，点击“加入并进入”。`127.0.0.1` 指向自己的电脑，不能用于加入朋友。
+按顺序确认加入、双方移动与战斗、拾取、共同进入和离开地牢，最后分别正常退出重进检查角色保存。某一步失败就记录双方版本、提示和日志，不能把监听端口当作联机成功。完整步骤见 [测试指南](docs/TESTING.md) 和 [已知问题](docs/KNOWN_ISSUES.md)。
 
-Windows 防火墙若出现提示，允许游戏在**专用网络**通信。若仍无法连接，检查开服端的 UDP 7777 入站权限。安装程序不会改动防火墙。本版没有公网穿透、房间列表、域名输入或 IPv6 支持。
+## 检查与停用
 
-连接取消与 35 秒超时返回已经实现，但尚未完成运行验证。连接无响应时，先记录现象；必要时正常退出游戏再启动。具体双机验证步骤见 [联机测试指南](docs/TESTING.md)。
+两个解压包各有 `Check.cmd` 与 `Uninstall.cmd`。先停用 LanDirect 蓝图，再停用 NativeBridge。不会恢复旧存档。原生包会恢复安装前的 Engine.ini；如有后续配置修改，会拒绝覆盖，手动处理方法见 [原生桥接说明](docs/NATIVE_BRIDGE.md)。
 
-## 停用与排查
-
-- 退出游戏，双击 `Uninstall.cmd`：仅移走安装记录中的三个 LanDirect 资源；不恢复旧存档、不改动其他 Mod 或加载器。
-- 双击 `Check.cmd`：检查安装包、游戏 EXE、加载器及已安装文件是否匹配。不等同于网络联机测试。
-- “游戏版本不匹配”：暂时停用 Mod，等重新验证新版，不要绕过版本校验。
-- “已有 LanDirect 资源”：先使用原安装对应的卸载程序，不会自动覆盖未知文件。
-- 没有安装记录的手动安装：退出游戏，将 `Dungeons\Content\Paks\~mods\LanDirect` 内的 `LanDirect_P.pak`、`.utoc`、`.ucas` 移出 `~mods`。保留其他文件。
-
-错误报告可提交到 [Issues](https://github.com/Rainchen537/Dungeons2-LanDirect/issues)。**不要上传完整存档、账号信息或整个崩溃转储。** 记录双方游戏版本、加载器版本、操作步骤与屏幕提示即可。
-
-## 当前验证范围
-
-| 内容 | 状态 |
-| --- | --- |
-| NeoRune 编译和资源打包 | 已通过 |
-| 主菜单原版按钮、鼠标点击和悬停 | 已验证 |
-| 原版弹窗资源与开服确认按钮 | 已验证 |
-| 主菜单直接开服进入 Overworld | 已验证 |
-| SpicewoodNetDriver 与 UDP `0.0.0.0:7777` | 已验证，同一游戏进程 |
-| 最新标题与遮罩微调、输入错误提示、连接取消和超时 | 待运行验证 |
-| 第二台电脑加入、移动、战斗、掉落、过图 | 待双机验证 |
-| 双方退出重进后的角色保存 | 待双机验证 |
-
-验证记录日期：2026-10-07。角色和网络检查仅证明本机开服链路成立；还没有解决或验证远端认证和离线角色身份适配。使用前保留备份，首次测试建议使用双方的测试英雄。
+备份位置：`%LOCALAPPDATA%\Dungeons2LanDirect`，安装窗口会显示具体路径。原生日志：游戏 `Dungeons\Binaries\Win64\LanDirect-native.log`。提交 [Issue](https://github.com/Rainchen537/Dungeons2-LanDirect/issues) 时提供操作步骤和提示，分享日志前去除私人信息，勿上传存档或崩溃转储。
 
 ## 源码构建
 
-Windows 上安装 [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)，然后运行：
+需要 .NET 10 SDK 与 MinGW-w64 的 `g++`。NeoRune SDK 固定为 `0.4.2`。
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Build-NativeBridge.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Build-LanDirect.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Package-LanDirect.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Package-NativeBridge.ps1
 ```
 
-SDK 使用 NuGet 上固定版本 `NeoRune.Sdk/0.4.2`，构建不会自动安装进游戏。输出为 `artifacts\LanDirect-0.1.0-windows.zip`。构建工具会优先使用本地 `dependencies\dotnet`（如果存在），否则使用 PATH 上的 .NET SDK。GitHub Actions 同样在 Windows 构建并上传安装包。
+原生源码在 `mods/NativeBridge`，菜单和角色检查在 `mods/LanDirect`。游戏 EXE SHA-256 固定为 `3a8703406fd50520f83c4f70a0212c000cb3b584ef28eb38032902230c01ebdd`；不适用其他构建。
 
-源码主要位于 [ModActor.cs](mods/LanDirect/ModActor.cs)（主菜单与 listen/travel）和 [LanPanel.cs](mods/LanDirect/LanPanel.cs)（原版控件弹窗）。游戏 EXE 校验值为：
-
-```text
-231147bd0c655a4ae73f90873675d42917f2bfb3a9ee164fc64f217d6d6bd4ef
-```
-
-本仓库不包含存档、游戏原版资源、加载器、私有工具依赖或本机研究转储。原创代码采用 [MIT](LICENSE) 许可，依赖说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。非官方项目，与游戏发行方无关联。
+本仓库原创代码使用 [MIT](LICENSE)，第三方说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。不包含游戏本体、玩家存档或 Blueprint Loader 原包。非官方项目。

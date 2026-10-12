@@ -13,18 +13,38 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: UCRT64
+          install: mingw-w64-ucrt-x86_64-gcc
       - name: Build mod
         shell: powershell
-        run: ./tools/Build-LanDirect.ps1
+        run: |
+          $env:PATH = '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin;' + $env:PATH
+          ./tools/Build-NativeBridge.ps1 -Compiler '${{ steps.msys2.outputs.msys2-location }}/ucrt64/bin/g++.exe'
+          ./tools/Build-LanDirect.ps1
+      - name: Test menu attachment lifecycle
+        shell: powershell
+        run: ./tests/Test-MenuLifecycle.ps1
       - name: Package release
         shell: powershell
-        run: ./tools/Package-LanDirect.ps1
+        run: |
+          ./tools/Package-LanDirect.ps1
+          ./tools/Package-NativeBridge.ps1
       - name: Test installer in isolated fixtures
         shell: powershell
         run: ./tests/Test-Installer.ps1
+      - name: Test native installer in isolated fixtures
+        shell: powershell
+        run: ./tests/Test-NativeBridgeInstaller.ps1
+      - name: Test host startup streaming values
+        shell: powershell
+        run: ./tests/Test-HostStreamingGate.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: LanDirect-windows
           path: |
-            artifacts/LanDirect-0.1.0-windows.zip
+            artifacts/LanDirect-*-windows.zip
+            artifacts/NativeBridge-*-windows.zip
             artifacts/SHA256SUMS.txt
