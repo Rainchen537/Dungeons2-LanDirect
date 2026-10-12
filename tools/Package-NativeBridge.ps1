@@ -7,7 +7,7 @@ Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination $stage
 Copy-Item -LiteralPath (Join-Path $root 'docs\NATIVE_BRIDGE.md') -Destination (Join-Path $stage 'README.md')
 $script=[IO.File]::ReadAllText((Join-Path $root 'scripts\Manage-NativeBridge.ps1'))
 [IO.File]::WriteAllText((Join-Path $stage 'scripts\Manage-NativeBridge.ps1'),$script,(New-Object Text.UTF8Encoding($true)))
-foreach ($action in @('Install','Uninstall','Check')) {
+foreach ($action in @('Install','Repair','Uninstall','Check')) {
     $cmd='@echo off'+"`r`n"+'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Manage-NativeBridge.ps1" -Action '+$action+"`r`n"+'set "result=%errorlevel%"'+"`r`n"+'pause'+"`r`n"+'exit /b %result%'+"`r`n"
     [IO.File]::WriteAllText((Join-Path $stage ($action+'.cmd')),$cmd)
 }

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('Install','Uninstall','Check')][string]$Action='Check',
+    [ValidateSet('Install','Repair','Uninstall','Check')][string]$Action='Check',
     [string]$GameRoot,
     [string]$PackageRoot=(Join-Path (Split-Path -Parent $PSScriptRoot) 'native'),
     [string]$StateRoot=(Join-Path $env:LOCALAPPDATA 'Dungeons2LanDirect\native'),
@@ -12,6 +12,49 @@ function Assert-Closed {
     if (Get-Process -Name 'Dungeons','Dungeons-Win64-Shipping' -ErrorAction SilentlyContinue) { throw '请先退出游戏。脚本不会关闭游戏。' }
 }
 function Hash($Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash }
+function Read-Config($Path) {
+    if (Test-Path -LiteralPath $Path) { return [IO.File]::ReadAllText($Path) }
+    return ''
+}
+function Original-Config($Ini) {
+    # Remove only the exact block installed by this package; keep surrounding settings.
+    $pattern='(?m)^; BEGIN LAN Direct server streaming\r?\nwp\.Runtime\.EnableServerStreaming=1\r?\nwp\.Runtime\.EnableServerStreamingOut=1\r?\n; END LAN Direct server streaming\r?\n?'
+    $result=[regex]::Replace($Ini,$pattern,'')
+    if ($result -match 'BEGIN LAN Direct server streaming|END LAN Direct server streaming') { throw 'LAN Direct 配置块已改动，请先核对该配置块。' }
+    if ($result -match '(?m)^\s*wp\.Runtime\.EnableServerStreaming(?:Out)?\s*=') { throw '发现自定义服务器流送设置，请先核对现有配置。' }
+    return $result
+}
+function Streaming-Config($Ini) {
+    $block="; BEGIN LAN Direct server streaming`r`nwp.Runtime.EnableServerStreaming=1`r`nwp.Runtime.EnableServerStreamingOut=1`r`n; END LAN Direct server streaming`r`n"
+    $section=[regex]::Match($Ini,'(?im)^\[SystemSettings\][^\r\n]*(?:\r?\n|$)')
+    if ($section.Success) {
+        $prefix=''
+        if (-not $section.Value.EndsWith("`n")) { $prefix="`r`n" }
+        return $Ini.Insert($section.Index+$section.Length,$prefix+$block)
+    }
+    return $Ini+"`r`n[SystemSettings]`r`n"+$block
+}
+function Unlock-Config($Path) {
+    if (Test-Path -LiteralPath $Path) {
+        $attributes=[IO.File]::GetAttributes($Path)
+        [IO.File]::SetAttributes($Path,($attributes -band (-bnot [IO.FileAttributes]::ReadOnly)))
+    }
+}
+function Check-StreamingConfig($Path) {
+    $ini=Read-Config $Path
+    $inSection=$false
+    $values=@{'wp.Runtime.EnableServerStreaming'=@();'wp.Runtime.EnableServerStreamingOut'=@()}
+    foreach ($line in ($ini -split '\r?\n')) {
+        if ($line -match '^\s*\[([^\]]+)\]') { $inSection=$Matches[1] -eq 'SystemSettings'; continue }
+        if ($inSection -and $line -match '^\s*(wp\.Runtime\.EnableServerStreaming(?:Out)?)\s*=\s*(.*?)\s*$') {
+            $values[$Matches[1]]+=@($Matches[2])
+        }
+    }
+    foreach ($key in $values.Keys) {
+        if ($values[$key].Count -ne 1 -or $values[$key][0] -ne '1') { throw "服务器流送配置无效：$key；请运行 Repair.cmd。" }
+    }
+    if (-not ([IO.File]::GetAttributes($Path) -band [IO.FileAttributes]::ReadOnly)) { throw 'Engine.ini 写入保护未启用，请运行 Repair.cmd。' }
+}
 try {
     if ($Action -eq 'Uninstall') {
         Assert-Closed
@@ -26,12 +69,14 @@ try {
         New-Item -ItemType Directory -Path $disabled -Force | Out-Null
         if (Test-Path -LiteralPath $dll) { Move-Item -LiteralPath $dll -Destination (Join-Path $disabled 'dwmapi.dll') }
         if ($state.configSha256 -and (Test-Path -LiteralPath $state.configPath)) {
+            Unlock-Config $state.configPath
             Move-Item -LiteralPath $state.configPath -Destination (Join-Path $disabled 'Engine.ini')
         }
         if ($state.configExisted) {
             $original=Join-Path $state.backupDir 'Engine.ini'
             if ((Hash $original) -ne $state.originalConfigSha256) { throw '原配置备份校验失败。' }
             Copy-Item -LiteralPath $original -Destination $state.configPath
+            if ($null -ne $state.originalConfigAttributes) { [IO.File]::SetAttributes($state.configPath,[IO.FileAttributes]$state.originalConfigAttributes) }
         }
         Move-Item -LiteralPath $statePath -Destination (Join-Path $disabled 'installation.json')
         Write-Host "原生桥接已停用，配置已恢复。存档未恢复。保留文件：$disabled"
@@ -51,23 +96,26 @@ try {
     $config=Join-Path $env:LOCALAPPDATA 'Dungeons2\Saved\Config\Windows\Engine.ini'
     if ($Action -eq 'Check') {
         if (-not (Test-Path -LiteralPath $dll) -or (Hash $dll) -ne $manifest.sha256) { throw '原生桥接未安装或与本包不同。' }
-        $ini=Get-Content -LiteralPath $config -Raw
-        foreach ($key in @('wp.Runtime.EnableServerStreaming','wp.Runtime.EnableServerStreamingOut')) {
-            if ($ini -notmatch ('(?m)^'+[regex]::Escape($key)+'=1\s*$')) { throw "缺少服务器流送设置：$key" }
-        }
-        Write-Host '原生桥接、游戏版本和服务器流送配置检查通过；双机行为仍需游戏内验证。'
+        Check-StreamingConfig $config
+        Write-Host '原生桥接、游戏版本、服务器流送配置和写入保护检查通过。'
         exit 0
     }
     Assert-Closed
-    if ((Test-Path -LiteralPath $dll) -or (Test-Path -LiteralPath $statePath)) { throw '已有 dwmapi.dll 或原生桥接安装记录。不会覆盖其他加载器；请先停用对应安装。' }
+    $previous=$null
+    if ($Action -eq 'Repair') {
+        $previous=Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+        if ($previous.gameRoot -ne $GameRoot -or $previous.configPath -ne $config -or $previous.dllSha256 -ne $manifest.sha256 -or (Hash $dll) -ne $manifest.sha256) { throw '安装记录或原生 DLL 与当前包不匹配。' }
+    } elseif ((Test-Path -LiteralPath $dll) -or (Test-Path -LiteralPath $statePath)) { throw '已有 dwmapi.dll 或原生桥接安装记录；升级配置请运行 Repair.cmd。' }
     $save=Join-Path $env:LOCALAPPDATA 'Dungeons2\Saved\SaveGames'
     if (-not (Test-Path -LiteralPath $save)) { throw '请先创建离线英雄并退出游戏。' }
     $existed=Test-Path -LiteralPath $config
     $ini=''
     if ($existed) { $ini=[IO.File]::ReadAllText($config) }
-    if ($ini -match '(?m)^\s*wp\.Runtime\.EnableServerStreaming(?:Out)?\s*=') {
-        throw '已有服务器流送设置，请先保留配置并移除原设置，避免重复覆盖。'
-    }
+    $baseline=Original-Config $ini
+    $attributes=[IO.FileAttributes]::Normal
+    if ($existed) { $attributes=[IO.File]::GetAttributes($config) }
+    $originalAttributes=$attributes
+    if ($previous -and $previous.configProtected) { $originalAttributes=$attributes -band (-bnot [IO.FileAttributes]::ReadOnly) }
     $backup=Join-Path $StateRoot ('backups\'+(Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
     New-Item -ItemType Directory -Path $backup -Force | Out-Null
     Copy-Item -LiteralPath $save -Destination $backup -Recurse
@@ -80,24 +128,39 @@ try {
     $hashes | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $backup 'save-hashes.json') -Encoding UTF8
     $originalHash=''
     if ($existed) {
-        Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.ini')
-        $originalHash=Hash $config
-        if ((Hash (Join-Path $backup 'Engine.ini')) -ne $originalHash) { throw '配置备份校验失败。' }
+        Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.before-repair.ini')
+        if ((Hash (Join-Path $backup 'Engine.before-repair.ini')) -ne (Hash $config)) { throw '配置备份校验失败。' }
+        if ($baseline -ceq ([IO.File]::ReadAllText($config))) { Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'Engine.ini') }
+        else { [IO.File]::WriteAllText((Join-Path $backup 'Engine.ini'),$baseline,(New-Object Text.UTF8Encoding($false))) }
+        $originalHash=Hash (Join-Path $backup 'Engine.ini')
     }
-    # Insert into the existing SystemSettings section, without duplicating a section.
-    $block="; BEGIN LAN Direct server streaming`r`nwp.Runtime.EnableServerStreaming=1`r`nwp.Runtime.EnableServerStreamingOut=1`r`n; END LAN Direct server streaming`r`n"
-    $section=[regex]::Match($ini,'(?im)^\[SystemSettings\][^\r\n]*(?:\r?\n|$)')
-    if ($section.Success) { $ini=$ini.Insert($section.Index+$section.Length,"`r`n"+$block) }
-    else { $ini+="`r`n[SystemSettings]`r`n"+$block }
+    if ($previous) { Copy-Item -LiteralPath $statePath -Destination (Join-Path $backup 'installation.before-repair.json') }
+    $ini=Streaming-Config $baseline
     $prepared=Join-Path $backup 'Engine.installed.ini'
     [IO.File]::WriteAllText($prepared,$ini,(New-Object Text.UTF8Encoding($false)))
-    $record=[pscustomobject]@{gameRoot=$GameRoot;dllSha256=$manifest.sha256;configPath=$config;configExisted=$existed;originalConfigSha256=$originalHash;configSha256=(Hash $prepared);backupDir=$backup}
-    $record | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
-    Copy-Item -LiteralPath $source -Destination $dll
-    if ((Hash $dll) -ne $manifest.sha256) { throw '原生桥接写入校验失败。请运行停用脚本。' }
-    New-Item -ItemType Directory -Path (Split-Path -Parent $config) -Force | Out-Null
-    Copy-Item -LiteralPath $prepared -Destination $config
-    if ((Hash $config) -ne $record.configSha256) { throw '配置写入校验失败。' }
-    $record | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+    $record=[pscustomobject]@{gameRoot=$GameRoot;dllSha256=$manifest.sha256;configPath=$config;configExisted=$existed;originalConfigAttributes=[int]$originalAttributes;configProtected=$true;originalConfigSha256=$originalHash;configSha256=(Hash $prepared);backupDir=$backup}
+    try {
+        if (-not $previous) { Copy-Item -LiteralPath $source -Destination $dll }
+        if ((Hash $dll) -ne $manifest.sha256) { throw '原生桥接写入校验失败。' }
+        New-Item -ItemType Directory -Path (Split-Path -Parent $config) -Force | Out-Null
+        Unlock-Config $config
+        Copy-Item -LiteralPath $prepared -Destination $config
+        if ((Hash $config) -ne $record.configSha256) { throw '配置写入校验失败。' }
+        [IO.File]::SetAttributes($config,($attributes -bor [IO.FileAttributes]::ReadOnly))
+        Check-StreamingConfig $config
+        $record | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+    } catch {
+        Unlock-Config $config
+        if ($existed) {
+            Copy-Item -LiteralPath (Join-Path $backup 'Engine.before-repair.ini') -Destination $config -Force
+            [IO.File]::SetAttributes($config,$attributes)
+        } elseif (Test-Path -LiteralPath $config) { Remove-Item -LiteralPath $config }
+        if ($previous) { Copy-Item -LiteralPath (Join-Path $backup 'installation.before-repair.json') -Destination $statePath -Force }
+        else {
+            if (Test-Path -LiteralPath $dll) { Remove-Item -LiteralPath $dll }
+            if (Test-Path -LiteralPath $statePath) { Remove-Item -LiteralPath $statePath }
+        }
+        throw
+    }
     Write-Host "原生桥接安装完成。存档和配置备份：$backup"
 } catch { Write-Host $_.Exception.Message -ForegroundColor Red; exit 1 }

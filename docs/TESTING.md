@@ -33,6 +33,12 @@
 
 若角色关联检查失败自动返回主菜单，保留诊断并停止该次测试，不跳过检查继续游戏。
 
+## 服务器流送配置回归
+
+退出游戏，运行 NativeBridge 的 `Repair.cmd` 和 `Check.cmd`，确认两项配置位于 `[SystemSettings]` 且 Engine.ini 为只读。通过 Steam 启动，在 Mod 设置中点击“记录诊断”，核对 `server streaming=1; streaming out=1`，然后创建本地大厅并通过原版“开始游戏”进入地牢。退出游戏后再次运行 `Check.cmd`，确认配置仍保留。最后停用原生前置，核对配置内容及只读属性恢复为修复前状态。
+
+自动检查：`tests/Test-NativeBridgeInstaller.ps1` 覆盖配置重建和删除后的修复、写入及删除保护、重复修复、原属性恢复、BOM 字节保留、错误节和冲突值；`tests/Test-HostStreamingGate.ps1` 执行源码中的开服方法，检查游戏实际流送值与大厅创建请求的对应关系。
+
 ## 本机只读检查
 
 开服后在 PowerShell 执行：
