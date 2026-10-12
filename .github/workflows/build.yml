@@ -38,6 +38,9 @@ jobs:
       - name: Test native installer in isolated fixtures
         shell: powershell
         run: ./tests/Test-NativeBridgeInstaller.ps1
+      - name: Test host startup streaming values
+        shell: powershell
+        run: ./tests/Test-HostStreamingGate.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: LanDirect-windows

@@ -357,6 +357,14 @@ public class ModActor : AActor, IModSettings
     void Host()
     {
         if (!Number(port, 1, 65535)) { Feedback("端口须为 1–65535 之间的数字。"); return; }
+        // World Partition reads these settings while constructing the world.
+        // Check the startup values before requesting a listener.
+        if (UKismetSystemLibrary.GetConsoleVariableIntValue("wp.Runtime.EnableServerStreaming") != 1
+            || UKismetSystemLibrary.GetConsoleVariableIntValue("wp.Runtime.EnableServerStreamingOut") != 1)
+        {
+            Feedback("服务器流送配置未生效。请退出游戏，运行 NativeBridge 的 Repair.cmd 后重新启动。");
+            return;
+        }
         if (World.LevelName(this) == "Menu_Spicewood")
         {
             var selected = SelectedOfflineCharacterId();
